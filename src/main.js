@@ -17,7 +17,13 @@ let playing=false,inCar=false,elapsed=0;const menu=document.querySelector('#menu
 function start(){playing=true;menu.classList.add('hidden');hud.classList.add('on');if(innerWidth<900 || matchMedia('(pointer: coarse)').matches)touch.classList.add('visible');}
 document.querySelector('#play').addEventListener('click',start);
 function interact(){if(!playing)return;const p=inCar?car.group.position:player.group.position;if(!inCar&&p.distanceTo(car.group.position)<5){inCar=true;player.group.visible=false;document.querySelector('#objective').textContent='Dirija e conheça a orla';}else if(inCar){inCar=false;player.group.visible=true;player.group.position.copy(car.group.position).add(new THREE.Vector3(2,0,0));}}
-const actionButton=document.querySelector('#interact');\nactionButton.addEventListener('pointerdown',e=>e.preventDefault());\nactionButton.addEventListener('click',e=>{e.preventDefault();interact();});\nconst jumpButton=document.querySelector('#jump');\njumpButton.addEventListener('pointerdown',e=>{e.preventDefault();controls.jump=true;});\njumpButton.addEventListener('click',e=>{e.preventDefault();controls.jump=true;});\nfor(const button of document.querySelectorAll('button')){button.addEventListener('contextmenu',e=>e.preventDefault());button.addEventListener('dragstart',e=>e.preventDefault());}addEventListener('keydown',e=>{if(e.code==='KeyE')interact();});
+const actionButton=document.querySelector('#interact');
+actionButton.addEventListener('pointerdown',e=>e.preventDefault());
+actionButton.addEventListener('click',e=>{e.preventDefault();interact();});
+const jumpButton=document.querySelector('#jump');
+jumpButton.addEventListener('pointerdown',e=>{e.preventDefault();controls.jump=true;});
+jumpButton.addEventListener('click',e=>{e.preventDefault();controls.jump=true;});
+for(const button of document.querySelectorAll('button')){button.addEventListener('contextmenu',e=>e.preventDefault());button.addEventListener('dragstart',e=>e.preventDefault());}addEventListener('keydown',e=>{if(e.code==='KeyE')interact();});
 const clock=new THREE.Clock();const target=new THREE.Vector3();
 function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.04);elapsed+=dt;if(playing){const input=controls.read();if(inCar){car.update(input,dt);target.copy(car.group.position);}else{player.update(input,dt);target.copy(player.group.position);}camera.position.lerp(new THREE.Vector3(target.x+13,target.y+10,target.z+17),1-Math.pow(.001,dt));camera.lookAt(target.x,target.y+1.8,target.z);world.update?.(dt);pedestrians.update(dt);document.querySelector('#clock').textContent='08:'+String(30+Math.floor(elapsed/5)%30).padStart(2,'0');}else{camera.position.set(65,46,75);camera.lookAt(0,0,0);}renderer.render(scene,camera);}
 loop();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));});
