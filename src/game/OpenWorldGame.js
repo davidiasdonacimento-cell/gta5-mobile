@@ -33,13 +33,13 @@ export class OpenWorldGame {
     const sun=new THREE.DirectionalLight(0xffffff,2);sun.position.set(-30,60,25);this.scene.add(sun);
 
     this.city=createCity(this.scene);
+    const saved=new SaveSystem().load()||{};
     this.player=new THREE.Group();
     const body=new THREE.Mesh(new THREE.CapsuleGeometry(.38,.75,4,8),new THREE.MeshStandardMaterial({color:0x16a6c9}));
     body.position.y=.95;this.player.add(body);this.playerBody=body;
     if(saved.characterColor)this.playerBody.material.color.setHex(saved.characterColor);
     const head=new THREE.Mesh(new THREE.SphereGeometry(.23,12,10),new THREE.MeshStandardMaterial({color:0xc9916b}));
     head.position.y=1.65;this.player.add(head);
-    const saved=new SaveSystem().load()||{};
     this.player.position.set(saved.player?.x??0,0,saved.player?.z??5);
     this.scene.add(this.player);
 
