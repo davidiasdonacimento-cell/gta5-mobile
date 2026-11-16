@@ -3,6 +3,7 @@ import { createWorld } from './world.js';
 import { createPlayer } from './character.js';
 import { createVehicle } from './vehicle.js';
 import { Controls } from './controls.js';
+import { NPCSystem } from './NPCSystem.js';
 import './style.css';
 
 const root=document.querySelector('#game');
@@ -11,12 +12,12 @@ const scene=new THREE.Scene();scene.background=new THREE.Color(0x9eb8c5);scene.f
 const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.1,700);
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;root.prepend(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xdcecff,0x52604d,2.1));const sun=new THREE.DirectionalLight(0xffe2bd,3.1);sun.position.set(-65,100,45);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-110;sun.shadow.camera.right=110;sun.shadow.camera.top=110;sun.shadow.camera.bottom=-110;scene.add(sun);
-const world=createWorld(scene);const player=createPlayer(scene);const car=createVehicle(scene,new THREE.Vector3(9,0,14));const controls=new Controls(renderer.domElement);
+const world=createWorld(scene);const pedestrians=new NPCSystem(scene,7);const player=createPlayer(scene);const car=createVehicle(scene,new THREE.Vector3(9,0,14));const controls=new Controls(renderer.domElement);
 let playing=false,inCar=false,elapsed=0;const menu=document.querySelector('#menu'),hud=document.querySelector('#hud'),touch=document.querySelector('#touch');
 function start(){playing=true;menu.classList.add('hidden');hud.classList.add('on');if(innerWidth<900)touch.style.display='block';}
 document.querySelector('#play').addEventListener('click',start);
 function interact(){if(!playing)return;const p=inCar?car.group.position:player.group.position;if(!inCar&&p.distanceTo(car.group.position)<5){inCar=true;player.group.visible=false;document.querySelector('#objective').textContent='Dirija e conheça a orla';}else if(inCar){inCar=false;player.group.visible=true;player.group.position.copy(car.group.position).add(new THREE.Vector3(2,0,0));}}
 document.querySelector('#interact').addEventListener('click',interact);document.querySelector('#jump').addEventListener('click',()=>controls.jump=true);addEventListener('keydown',e=>{if(e.code==='KeyE')interact();});
 const clock=new THREE.Clock();const target=new THREE.Vector3();
-function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.04);elapsed+=dt;if(playing){const input=controls.read();if(inCar){car.update(input,dt);target.copy(car.group.position);}else{player.update(input,dt);target.copy(player.group.position);}camera.position.lerp(new THREE.Vector3(target.x+13,target.y+10,target.z+17),1-Math.pow(.001,dt));camera.lookAt(target.x,target.y+1.8,target.z);world.update?.(dt);document.querySelector('#clock').textContent='08:'+String(30+Math.floor(elapsed/5)%30).padStart(2,'0');}else{camera.position.set(65,46,75);camera.lookAt(0,0,0);}renderer.render(scene,camera);}
+function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.04);elapsed+=dt;if(playing){const input=controls.read();if(inCar){car.update(input,dt);target.copy(car.group.position);}else{player.update(input,dt);target.copy(player.group.position);}camera.position.lerp(new THREE.Vector3(target.x+13,target.y+10,target.z+17),1-Math.pow(.001,dt));camera.lookAt(target.x,target.y+1.8,target.z);world.update?.(dt);pedestrians.update(dt);document.querySelector('#clock').textContent='08:'+String(30+Math.floor(elapsed/5)%30).padStart(2,'0');}else{camera.position.set(65,46,75);camera.lookAt(0,0,0);}renderer.render(scene,camera);}
 loop();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));});
