@@ -13,7 +13,7 @@ import { Vehicle } from '../vehicles/Vehicle.js';
 const MISSION_DATA={
   'city-tour':{id:'city-tour',title:'Passeio pela cidade',description:'Chegue ao ponto de observação na avenida.',target:{x:0,z:-48},reward:500},
   'shop-delivery':{id:'shop-delivery',title:'Entrega na loja',description:'Encontre a loja iluminada no distrito.',target:{x:13,z:8},reward:750},
-  'patrol-escape':{id:'patrol-escape',title:'Rota da patrulha',description:'Chegue ao destino enquanto a patrulha acompanha você.',target:{x:-55,z:-65},reward:1000}
+  'patrol-escape':{id:'patrol-escape',title:'Rota da patrulha',description:'Chegue ao destino na avenida enquanto a patrulha acompanha você.',target:{x:-78,z:0},reward:1000}
 };
 
 export class OpenWorldGame {
@@ -43,7 +43,8 @@ export class OpenWorldGame {
     this.player.position.set(saved.player?.x??0,0,saved.player?.z??5);
     this.scene.add(this.player);
 
-    this.vehicle=new Vehicle(this.scene,new THREE.Vector3(4,0,2));
+    this.vehicle=new Vehicle(this.scene,new THREE.Vector3(saved.vehiclePosition?.x??4,0,saved.vehiclePosition?.z??2));
+    this.previousVehiclePosition=this.vehicle.group.position.clone();
     this.inVehicle=false;
     this.npcs=new NPCSystem(this.scene,10);
     this.traffic=new TrafficSystem(this.scene,6);
@@ -94,7 +95,8 @@ export class OpenWorldGame {
   saveProgress(){
     this.save.save({
       money:this.money,
-      player:{x:this.player.position.x,z:this.player.position.z},
+      player:{x:this.getActorPosition().x,z:this.getActorPosition().z},
+      vehiclePosition:{x:this.vehicle.group.position.x,z:this.vehicle.group.position.z},
       completedMissions:this.missions.getState().completed,
       supplies:this.supplies,
       characterColor:this.playerBody.material.color.getHex(),
@@ -161,6 +163,10 @@ export class OpenWorldGame {
     }
     this.ui.setSpeed(direction.lengthSq()?7:0);
   }
+  isVehicleBlocked(x,z){
+    if(Math.abs(x)>110||Math.abs(z)>110)return true;
+    return this.city.colliders.some(box=>Math.abs(x-box.x)<box.halfX+1.15&&Math.abs(z-box.z)<box.halfZ+2.0);
+  }
   updateDriving(input,dt){
     const forward=input.forward||this.keys.has('w')||this.keys.has('arrowup');
     const back=input.back||this.keys.has('s')||this.keys.has('arrowdown');
@@ -169,6 +175,8 @@ export class OpenWorldGame {
     this.vehicle.update(Number(forward)-Number(back),Number(right)-Number(left),dt);
     this.vehicle.group.position.x=THREE.MathUtils.clamp(this.vehicle.group.position.x,-112,112);
     this.vehicle.group.position.z=THREE.MathUtils.clamp(this.vehicle.group.position.z,-112,112);
+    if(this.isVehicleBlocked(this.vehicle.group.position.x,this.vehicle.group.position.z)){this.vehicle.group.position.copy(this.previousVehiclePosition);this.vehicle.stop();}
+    this.previousVehiclePosition=this.vehicle.group.position.clone();
     this.ui.setSpeed(Math.abs(this.vehicle.speed)*3.6);
   }
   updateCamera(dt){
