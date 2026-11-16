@@ -29,7 +29,7 @@ export class OpenWorldGame {
     this.onKeyDown=e=>{this.keys.add(e.key.toLowerCase());if(e.key==='Escape')this.ui.togglePause();};
     this.onKeyUp=e=>this.keys.delete(e.key.toLowerCase()); this.onResize=()=>this.resize();
     addEventListener('keydown',this.onKeyDown);addEventListener('keyup',this.onKeyUp);addEventListener('resize',this.onResize);
-    this.active=false;this.started=false;this.animate=this.animate.bind(this);
+    this.active=false;this.started=false;this.verticalVelocity=0;this.animate=this.animate.bind(this);
   }
   start(){this.renderer.setAnimationLoop(this.animate);document.querySelector('#loading').classList.add('hidden');}
   enterGame(){this.started=true;this.active=true;this.ui.hideScreens();this.ui.setStatus('Explorando');}
@@ -45,6 +45,9 @@ export class OpenWorldGame {
       const left=input.left||this.keys.has('a')||this.keys.has('arrowleft');
       const right=input.right||this.keys.has('d')||this.keys.has('arrowright');
       const direction=new THREE.Vector3(Number(right)-Number(left),0,Number(back)-Number(forward));
+      if(input.jump&&this.player.position.y<=0.001)this.verticalVelocity=6;
+      this.verticalVelocity-=16*dt;this.player.position.y=Math.max(0,this.player.position.y+this.verticalVelocity*dt);
+      if(this.player.position.y===0)this.verticalVelocity=0;
       if(direction.lengthSq()){direction.normalize();this.player.position.addScaledVector(direction,7*dt);this.player.rotation.y=Math.atan2(direction.x,direction.z);}
       this.camera.position.lerp(new THREE.Vector3(this.player.position.x,7,this.player.position.z+11),1-Math.exp(-5*dt));
       this.camera.lookAt(this.player.position.x,.8,this.player.position.z);
