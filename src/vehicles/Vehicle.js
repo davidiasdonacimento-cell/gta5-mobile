@@ -3,7 +3,7 @@ import * as THREE from 'three';
 export class Vehicle {
   constructor(scene,position=new THREE.Vector3(3,0,3)) {
     this.group=new THREE.Group();this.speed=0;this.maxSpeed=24;this.steeringAngle=0;
-    const paint=new THREE.MeshStandardMaterial({color:0xd34c4c,metalness:.28,roughness:.48});
+    const paint=new THREE.MeshStandardMaterial({color:0xd34c4c,metalness:.28,roughness:.48});this.paint=paint;
     const glass=new THREE.MeshStandardMaterial({color:0x243c4b,metalness:.1,roughness:.22});
     const rubber=new THREE.MeshStandardMaterial({color:0x11151a,roughness:.9});
     const rim=new THREE.MeshStandardMaterial({color:0x9daab5,metalness:.7,roughness:.3});
@@ -31,6 +31,7 @@ export class Vehicle {
     for(const wheel of this.wheels){if(wheel.front)wheel.mesh.rotation.y=this.steeringAngle;wheel.mesh.rotation.x-=this.speed*delta/.38;}
     return this.speed;
   }
+  setPaint(color){this.paint.color.setHex(color);}
   stop(){this.speed=0;}
   dispose(){this.group.removeFromParent();}
 }
