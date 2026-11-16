@@ -35,7 +35,8 @@ export class OpenWorldGame {
     this.city=createCity(this.scene);
     this.player=new THREE.Group();
     const body=new THREE.Mesh(new THREE.CapsuleGeometry(.38,.75,4,8),new THREE.MeshStandardMaterial({color:0x16a6c9}));
-    body.position.y=.95;this.player.add(body);
+    body.position.y=.95;this.player.add(body);this.playerBody=body;
+    if(saved.characterColor)this.playerBody.material.color.setHex(saved.characterColor);
     const head=new THREE.Mesh(new THREE.SphereGeometry(.23,12,10),new THREE.MeshStandardMaterial({color:0xc9916b}));
     head.position.y=1.65;this.player.add(head);
     const saved=new SaveSystem().load()||{};
@@ -52,6 +53,9 @@ export class OpenWorldGame {
     this.keys=new Set();
     this.save=new SaveSystem();
     this.money=Number.isFinite(saved.money)?saved.money:2500;
+    this.supplies=Number.isFinite(saved.supplies)?saved.supplies:0;
+    this.vehicleColor=saved.vehicleColor||0xd34c4c;
+    if(saved.vehicleColor)this.vehicle.setPaint(saved.vehicleColor);
     this.ui=new UIController({
       money:this.money,
       onPlay:()=>this.enterGame(),
@@ -84,19 +88,27 @@ export class OpenWorldGame {
   start(){this.renderer.setAnimationLoop(this.animate);document.querySelector('#loading').classList.add('hidden');}
   enterGame(){this.started=true;this.active=true;this.ui.hideScreens();this.ui.setStatus('Explorando');this.ui.notify('Bem-vindo à cidade!');}
   resume(){this.active=true;this.ui.hideScreens();}
-  showMenu(){this.active=false;this.ui.showMenu();}
+  showMenu(){this.active=false;this.saveProgress();this.ui.showMenu();}
 
   getActorPosition(){return this.inVehicle?this.vehicle.group.position:this.player.position;}
   saveProgress(){
     this.save.save({
       money:this.money,
       player:{x:this.player.position.x,z:this.player.position.z},
-      completedMissions:this.missions.getState().completed
+      completedMissions:this.missions.getState().completed,
+      supplies:this.supplies,
+      characterColor:this.playerBody.material.color.getHex(),
+      vehicleColor:this.vehicleColor
     });
   }
-  purchase(price){
-    if(this.money<price){this.ui.notify('Dinheiro insuficiente.');return false;}
-    this.money-=price;this.ui.setMoney(this.money);this.saveProgress();return true;
+  purchase(item){
+    const price=Number(item?.price)||0;
+    if(!price||this.money<price){this.ui.notify('Dinheiro insuficiente.');return false;}
+    this.money-=price;
+    if(item.id==='outfit')this.playerBody.material.color.setHex(0x9464d8);
+    if(item.id==='vehicle-paint'){this.vehicleColor=0x168dff;this.vehicle.setPaint(this.vehicleColor);}
+    if(item.id==='supplies')this.supplies+=1;
+    this.ui.setMoney(this.money);this.saveProgress();return true;
   }
   startMission(id){
     const template=MISSION_DATA[id];
@@ -210,6 +222,7 @@ export class OpenWorldGame {
   }
   resize(){this.camera.aspect=innerWidth/innerHeight;this.camera.updateProjectionMatrix();this.renderer.setSize(innerWidth,innerHeight);}
   dispose(){
+    this.saveProgress();
     this.renderer.setAnimationLoop(null);this.controls.dispose();this.ui.dispose();
     this.npcs.dispose();this.traffic.dispose();this.police.dispose();this.vehicle.dispose();
     removeEventListener('keydown',this.onKeyDown);removeEventListener('keyup',this.onKeyUp);removeEventListener('resize',this.onResize);
