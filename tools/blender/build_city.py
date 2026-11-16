@@ -36,5 +36,6 @@ capsule('Player torso',(0,0,1.45),.38,.9,fabric); capsule('Player head',(0,0,2.2
 for s in [-1,1]:
  capsule('Arm',(s*.48,0,1.45),.13,.82,fabric); capsule('Leg',(s*.2,0,.55),.16,1.05,pants)
 os.makedirs('assets',exist_ok=True)
+bpy.ops.object.select_all(action='SELECT'); bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath('assets/metro_city.blend'))
 bpy.ops.object.select_all(action='SELECT'); bpy.ops.export_scene.gltf(filepath=os.path.abspath('assets/metro_city.glb'),export_format='GLB',use_selection=True)
 print('METRO CITY GLB exported')
