@@ -22,6 +22,7 @@ export class UIController {
   notify(message,duration=2200){const el=document.querySelector('#toast');if(!el)return;el.textContent=message;el.classList.add('show');clearTimeout(this.toastTimer);this.toastTimer=setTimeout(()=>el.classList.remove('show'),duration);}
   showInteract(show){document.querySelector('#interact-button')?.classList.toggle('hidden',!show);}
   openPanel(name){
+    this.menuWasActive=document.querySelector('#menu-screen')?.classList.contains('active')||false;
     const title=document.querySelector('#panel-title'),content=document.querySelector('#panel-content');
     const panels={
       store:{title:'LOJAS DA CIDADE',items:[['Loja de roupas','Estilo e personalização do personagem',450],['Oficina','Visual e melhorias para veículos',900],['Mercado','Itens e suprimentos do mundo',150]]},
