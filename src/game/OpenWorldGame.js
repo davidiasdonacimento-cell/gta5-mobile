@@ -15,7 +15,7 @@ export class OpenWorldGame {
     this.renderer.shadowMap.enabled=false; this.clock=new THREE.Clock();
     this.scene.add(new THREE.HemisphereLight(0xffffff,0x53616b,2));
     const sun=new THREE.DirectionalLight(0xffffff,2); sun.position.set(-30,60,25); this.scene.add(sun);
-    createCity(this.scene);
+    this.city=createCity(this.scene);
     this.player=new THREE.Group();
     const body=new THREE.Mesh(new THREE.CapsuleGeometry(.38,.75,4,8),new THREE.MeshStandardMaterial({color:0x16a6c9}));
     body.position.y=.95; this.player.add(body);
@@ -49,6 +49,8 @@ export class OpenWorldGame {
       this.camera.position.lerp(new THREE.Vector3(this.player.position.x,7,this.player.position.z+11),1-Math.exp(-5*dt));
       this.camera.lookAt(this.player.position.x,.8,this.player.position.z);
       this.ui.setSpeed(direction.lengthSq()?7:0);
+      const nearShop=this.city.shopPosition.distanceTo(this.player.position)<4;
+      this.ui.showInteract(nearShop);
     }
     this.renderer.render(this.scene,this.camera);
   }
