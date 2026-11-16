@@ -45,7 +45,8 @@ export class OpenWorldGame {
       const left=input.left||this.keys.has('a')||this.keys.has('arrowleft');
       const right=input.right||this.keys.has('d')||this.keys.has('arrowright');
       const direction=new THREE.Vector3(Number(right)-Number(left),0,Number(back)-Number(forward));
-      if(input.jump&&this.player.position.y<=0.001)this.verticalVelocity=6;
+      if(input.jump&&!this.jumpWasDown&&this.player.position.y<=0.001)this.verticalVelocity=6;
+      this.jumpWasDown=input.jump;
       this.verticalVelocity-=16*dt;this.player.position.y=Math.max(0,this.player.position.y+this.verticalVelocity*dt);
       if(this.player.position.y===0)this.verticalVelocity=0;
       if(direction.lengthSq()){direction.normalize();this.player.position.addScaledVector(direction,7*dt);this.player.rotation.y=Math.atan2(direction.x,direction.z);}
