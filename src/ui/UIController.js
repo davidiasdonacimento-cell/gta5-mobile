@@ -1,13 +1,13 @@
 export class UIController {
-  constructor({money=0,onPlay=()=>{},onResume=()=>{},onMenu=()=>{},onPurchase=()=>{}}={}) {
-    this.money=money;this.onPlay=onPlay;this.onResume=onResume;this.onMenu=onMenu;this.onPurchase=onPurchase;
+  constructor({money=0,onPlay=()=>{},onResume=()=>{},onMenu=()=>{},onPurchase=()=>{},onInteract=()=>{},onMissionStart=()=>{}}={}) {
+    this.money=money;this.onPlay=onPlay;this.onResume=onResume;this.onMenu=onMenu;this.onPurchase=onPurchase;this.onInteract=onInteract;this.onMissionStart=onMissionStart;
     this.toastTimer=null;this.handlers=[];
     this.bind('#play-button','click',()=>this.onPlay());
     this.bind('#pause-button','click',()=>this.togglePause());
     this.bind('#resume-button','click',()=>this.onResume());
     this.bind('#menu-button','click',()=>this.onMenu());
     this.bind('#close-panel','click',()=>this.closePanel());
-    this.bind('#interact-button','click',()=>this.openPanel('store'));
+    this.bind('#interact-button','click',()=>this.onInteract());
     document.querySelectorAll('[data-panel]').forEach(button=>this.bindElement(button,'click',()=>this.openPanel(button.dataset.panel)));
   }
   bind(selector,event,callback){const el=document.querySelector(selector);if(el)this.bindElement(el,event,callback);}
@@ -20,30 +20,46 @@ export class UIController {
   setSpeed(value){const el=document.querySelector('#speed');if(el)el.textContent=Math.round(value)+' km/h';}
   setMoney(value){this.money=value;const el=document.querySelector('#money');if(el)el.textContent='$ '+Number(value).toLocaleString('pt-BR');}
   notify(message,duration=2200){const el=document.querySelector('#toast');if(!el)return;el.textContent=message;el.classList.add('show');clearTimeout(this.toastTimer);this.toastTimer=setTimeout(()=>el.classList.remove('show'),duration);}
-  showInteract(show){document.querySelector('#interact-button')?.classList.toggle('hidden',!show);}
+  showInteract(show,label='INTERAGIR'){const el=document.querySelector('#interact-button');if(!el)return;el.classList.toggle('hidden',!show);el.textContent=label;}
+  showMission(mission){
+    const box=document.querySelector('#mission-banner'),title=document.querySelector('#mission-title');
+    if(!box)return;
+    if(!mission){box.classList.add('hidden');return;}
+    title.textContent=mission.title;box.classList.remove('hidden');
+  }
+  addPanelItem(container,{title,description,action,disabled=false}) {
+    const row=document.createElement('div');row.className='panel-item';
+    const info=document.createElement('div'),strong=document.createElement('strong'),small=document.createElement('small');
+    strong.textContent=title;small.textContent=description;info.append(strong,small);
+    const button=document.createElement('button');button.className='buy-button';button.textContent=action.label;button.disabled=disabled;
+    if(action.run)button.addEventListener('click',action.run);
+    row.append(info,button);container.append(row);
+  }
   openPanel(name){
     this.menuWasActive=document.querySelector('#menu-screen')?.classList.contains('active')||false;
     const title=document.querySelector('#panel-title'),content=document.querySelector('#panel-content');
-    const panels={
-      store:{title:'LOJAS DA CIDADE',items:[['Loja de roupas','Estilo e personalização do personagem',450],['Oficina','Visual e melhorias para veículos',900],['Mercado','Itens e suprimentos do mundo',150]]},
-      garage:{title:'GARAGEM',items:[['Carro esportivo','Veículo de demonstração • em desenvolvimento',0],['Oficina pessoal','Personalização de veículos • em breve',0]]},
-      missions:{title:'MISSÕES',items:[['Primeiros passos','Explore a cidade e conheça os pontos principais',0],['Entrega urbana','Missão de entrega • em breve',0],['Desafio de direção','Prova de direção • em breve',0]]},
-      settings:{title:'CONFIGURAÇÕES',settings:true}
-    };
-    const panel=panels[name]||panels.store;title.textContent=panel.title;content.replaceChildren();
-    if(panel.settings){
-      const row=document.createElement('div');row.className='setting-row';row.innerHTML='<span>Qualidade gráfica</span><strong>Automática</strong>';content.append(row);
-      const note=document.createElement('p');note.className='setting-note';note.textContent='O jogo limita a resolução para manter o desempenho em celulares.';content.append(note);
-      const row2=document.createElement('div');row2.className='setting-row';row2.innerHTML='<span>Controles</span><strong>Toque + teclado</strong>';content.append(row2);
-    } else {
-      panel.items.forEach(([label,description,price])=>{
-        const row=document.createElement('div');row.className='panel-item';
-        const info=document.createElement('div');const strong=document.createElement('strong');strong.textContent=label;const small=document.createElement('small');small.textContent=description;info.append(strong,small);
-        const button=document.createElement('button');button.className='buy-button';
-        if(price>0){button.textContent='$ '+price.toLocaleString('pt-BR');button.addEventListener('click',()=>{if(this.onPurchase(price)){button.textContent='ADQUIRIDO';button.disabled=true;}});}
-        else {button.textContent='EM BREVE';button.disabled=true;}
-        row.append(info,button);content.append(row);
-      });
+    content.replaceChildren();
+    title.textContent=({store:'LOJAS DA CIDADE',garage:'GARAGEM',missions:'MISSÕES',settings:'CONFIGURAÇÕES'})[name]||'CENTRAL DA CIDADE';
+    if(name==='store'){
+      [
+        {title:'Loja de roupas',description:'Personalização visual do personagem',price:450},
+        {title:'Oficina',description:'Pintura e melhorias visuais do carro',price:900},
+        {title:'Mercado',description:'Suprimentos para explorar a cidade',price:150}
+      ].forEach(item=>this.addPanelItem(content,{title:item.title,description:item.description,action:{label:'$ '+item.price.toLocaleString('pt-BR'),run:()=>{if(this.onPurchase(item.price)){this.notify(item.title+' comprado!');}}}}));
+    } else if(name==='garage'){
+      this.addPanelItem(content,{title:'Sedan esportivo',description:'Seu primeiro veículo. Encontre-o na avenida.',action:{label:'LOCALIZAR',run:()=>{this.closePanel();this.notify('O veículo está marcado perto da avenida.');}}});
+      this.addPanelItem(content,{title:'Personalização',description:'Pintura, rodas e melhorias — próximas atualizações',action:{label:'EM BREVE'},disabled:true});
+    } else if(name==='missions'){
+      const missions=[
+        {id:'city-tour',title:'Passeio pela cidade',description:'Dirija ou caminhe até o ponto de observação.',reward:500},
+        {id:'shop-delivery',title:'Entrega na loja',description:'Encontre a loja iluminada no distrito.',reward:750},
+        {id:'patrol-escape',title:'Rota da patrulha',description:'Chegue ao destino enquanto a patrulha acompanha você.',reward:1000}
+      ];
+      missions.forEach(m=>this.addPanelItem(content,{title:m.title,description:m.description+' • Recompensa: $ '+m.reward,action:{label:'INICIAR',run:()=>{if(this.onMissionStart(m.id)){this.closePanel();this.notify('Missão iniciada: '+m.title,2800);}else this.notify('Conclua a missão atual antes de iniciar outra.');}}}));
+    } else if(name==='settings'){
+      this.addPanelItem(content,{title:'Qualidade gráfica',description:'Resolução adaptada para celulares.',action:{label:'AUTOMÁTICA'},disabled:true});
+      this.addPanelItem(content,{title:'Controles',description:'Use o direcional na tela ou WASD/teclas de seta.',action:{label:'TOQUE + TECLADO'},disabled:true});
+      this.addPanelItem(content,{title:'Salvar progresso',description:'O dinheiro e a posição são salvos neste navegador.',action:{label:'AUTOMÁTICO'},disabled:true});
     }
     this.show('#panel-screen');
   }
