@@ -42,10 +42,10 @@ export class UIController {
     title.textContent=({store:'LOJAS DA CIDADE',garage:'GARAGEM',missions:'MISSÕES',settings:'CONFIGURAÇÕES'})[name]||'CENTRAL DA CIDADE';
     if(name==='store'){
       [
-        {title:'Loja de roupas',description:'Personalização visual do personagem',price:450},
-        {title:'Oficina',description:'Pintura e melhorias visuais do carro',price:900},
-        {title:'Mercado',description:'Suprimentos para explorar a cidade',price:150}
-      ].forEach(item=>this.addPanelItem(content,{title:item.title,description:item.description,action:{label:'$ '+item.price.toLocaleString('pt-BR'),run:()=>{if(this.onPurchase(item.price)){this.notify(item.title+' comprado!');}}}}));
+        {id:'outfit',title:'Roupa urbana',description:'Muda a cor da roupa do personagem',price:450},
+        {id:'vehicle-paint',title:'Pintura esportiva',description:'Personaliza a cor do seu carro',price:900},
+        {id:'supplies',title:'Suprimentos',description:'Adiciona um item ao inventário',price:150}
+      ].forEach(item=>this.addPanelItem(content,{title:item.title,description:item.description,action:{label:'$ '+item.price.toLocaleString('pt-BR'),run:()=>{if(this.onPurchase(item)){this.notify(item.title+' comprado!');}}}}));
     } else if(name==='garage'){
       this.addPanelItem(content,{title:'Sedan esportivo',description:'Seu primeiro veículo. Encontre-o na avenida.',action:{label:'LOCALIZAR',run:()=>{this.closePanel();this.notify('O veículo está marcado perto da avenida.');}}});
       this.addPanelItem(content,{title:'Personalização',description:'Pintura, rodas e melhorias — próximas atualizações',action:{label:'EM BREVE'},disabled:true});
